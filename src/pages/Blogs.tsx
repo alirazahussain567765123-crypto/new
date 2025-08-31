@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, ArrowRight, Tag, User, Clock, Search, Filter, Share2, Eye, BookOpen, TrendingUp, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { loadAllBlogs, getBlogCategories, getBlogTags, getBlogsByCategory, getBlogsByTag, searchBlogs, BlogArticle } from '../utils/blogLoader';
 import SEOHead from '../components/SEOHead';
+import '../utils/debugLoader'; // Import debug loader
 
 
 // SEO Component for structured data

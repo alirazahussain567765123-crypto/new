@@ -1,5 +1,6 @@
 // Dynamic blog loader utility to load markdown files from blogs directory
 import { marked } from 'marked';
+import { fallbackBlogArticles } from './fallbackContent';
 
 export interface BlogMetadata {
   id?: string;
@@ -73,10 +74,19 @@ function generateSlug(filename: string): string {
 
 // Get all markdown files dynamically from blogs directory
 function getMarkdownFiles(): Record<string, () => Promise<any>> {
-  const files = {
-    ...import.meta.glob('/src/content/blogs/*.md', { as: 'raw', eager: false })
-  };
-  return files;
+  try {
+    const files = {
+      ...import.meta.glob('/src/content/blogs/*.md', { as: 'raw', eager: false }),
+      // Add relative path variants for better compatibility
+      ...import.meta.glob('../content/blogs/*.md', { as: 'raw', eager: false })
+    };
+    
+    console.log('Found blog markdown files:', Object.keys(files));
+    return files;
+  } catch (error) {
+    console.error('Error loading blog markdown files:', error);
+    return {};
+  }
 }
 
 // Cache for loaded articles to improve performance
@@ -96,8 +106,8 @@ export async function loadAllBlogs(): Promise<BlogArticle[]> {
   const files = getMarkdownFiles();
   
   if (Object.keys(files).length === 0) {
-    console.warn('No markdown files found in /src/content/blogs/');
-    return [];
+    console.warn('No blog markdown files found, using fallback content');
+    return fallbackBlogArticles;
   }
   
   for (const [filePath, loadFile] of Object.entries(files)) {
@@ -117,6 +127,12 @@ export async function loadAllBlogs(): Promise<BlogArticle[]> {
     } catch (error) {
       console.error(`Error loading blog file ${filePath}:`, error);
     }
+  }
+  
+  // If no articles loaded successfully, use fallback
+  if (articles.length === 0) {
+    console.warn('No blog articles loaded successfully, using fallback content');
+    return fallbackBlogArticles;
   }
   
   // Sort by date (newest first)

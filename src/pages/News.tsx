@@ -3,6 +3,7 @@ import { Calendar, ArrowRight, Tag, Award, Users, TrendingUp, Building, X, Chevr
 import { loadAllNews, getNewsCategories, getNewsByCategory, NewsArticle } from '../utils/newsLoader';
 import SEOHead from '../components/SEOHead';
 import NewsletterSubscription from '../components/NewsletterSubscription';
+import '../utils/debugLoader'; // Import debug loader
 
 
 // SEO Component for structured data

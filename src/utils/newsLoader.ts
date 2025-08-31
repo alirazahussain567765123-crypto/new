@@ -1,5 +1,6 @@
 // Dynamic news loader utility to load markdown files from content directory
 import { marked } from 'marked';
+import { fallbackNewsArticles } from './fallbackContent';
 
 export interface NewsMetadata {
   id?: string;
@@ -62,12 +63,22 @@ function generateSlug(filename: string): string {
 
 // Get all markdown files dynamically from content directory
 function getMarkdownFiles(): Record<string, () => Promise<any>> {
-  // Try multiple possible locations for markdown files
-  const files = {
-    ...import.meta.glob('/src/content/*.md', { as: 'raw', eager: false }),
-    ...import.meta.glob('/src/content/news/*.md', { as: 'raw', eager: false })
-  };
-  return files;
+  try {
+    // Try multiple possible locations for markdown files
+    const files = {
+      ...import.meta.glob('/src/content/*.md', { as: 'raw', eager: false }),
+      ...import.meta.glob('/src/content/news/*.md', { as: 'raw', eager: false }),
+      // Add relative path variants for better compatibility
+      ...import.meta.glob('../content/*.md', { as: 'raw', eager: false }),
+      ...import.meta.glob('../content/news/*.md', { as: 'raw', eager: false })
+    };
+    
+    console.log('Found markdown files:', Object.keys(files));
+    return files;
+  } catch (error) {
+    console.error('Error loading markdown files:', error);
+    return {};
+  }
 }
 
 // Cache for loaded articles to improve performance
@@ -87,8 +98,8 @@ export async function loadAllNews(): Promise<NewsArticle[]> {
   const files = getMarkdownFiles();
   
   if (Object.keys(files).length === 0) {
-    console.warn('No markdown files found in /src/content/ or /src/content/news/');
-    return [];
+    console.warn('No markdown files found, using fallback content');
+    return fallbackNewsArticles;
   }
   
   for (const [filePath, loadFile] of Object.entries(files)) {
@@ -108,6 +119,12 @@ export async function loadAllNews(): Promise<NewsArticle[]> {
     } catch (error) {
       console.error(`Error loading news file ${filePath}:`, error);
     }
+  }
+  
+  // If no articles loaded successfully, use fallback
+  if (articles.length === 0) {
+    console.warn('No articles loaded successfully, using fallback content');
+    return fallbackNewsArticles;
   }
   
   // Sort by date (newest first)
